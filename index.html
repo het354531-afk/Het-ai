@@ -64,7 +64,15 @@
           })
         });
 
-        const data = await res.json();
+                const rawText = await res.text();
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {
+          loadingMsg.innerText = "❌ સર્વર જવાબ (" + res.status + "): " + rawText.slice(0, 120);
+          return;
+        }
+        
 
         if (data.error) {
           loadingMsg.innerText = "❌ ભૂલ: " + data.error.message;
