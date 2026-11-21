@@ -15,13 +15,22 @@ export default async function handler(req, res) {
         }
 
         const ai = new GoogleGenAI({ apiKey: apiKey });
-        const response = await ai.models.generateContent({
-            model: 'gemini-3.8-flash',
-            contents: userText,
-        });
+        const models = ['gemini-3.8-flash', 'gemini-3.8-flash-lite', 'gemini-2.5-flash-lite'];
+        let lastError = null;
 
-        const reply = response.text;
-        return res.status(200).json({ reply: reply });
+        for (const modelName of models) {
+            try {
+                const response = await ai.models.generateContent({
+                    model: modelName,
+                    contents: userText,
+                });
+                return res.status(200).json({ reply: response.text });
+            } catch (err) {
+                lastError = err;
+            }
+        }
+
+        return res.status(503).json({ error: { message: lastError ? lastError.message : 'સર્વર વ્યસ્ત છે, ફરી પ્રયત્ન કરો.' } });
     } catch (error) {
         return res.status(500).json({ error: { message: error.message } });
     }
