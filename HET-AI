@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>het AI - Smart Assistant</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; height: 100vh; }
+        header { background-color: #1e293b; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+        header h1 { font-size: 1.4rem; color: #38bdf8; letter-spacing: 1px; }
+        .api-btn { background: #334155; color: #f8fafc; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+        .api-btn:hover { background: #475569; }
+        #api-box { display: none; background: #1e293b; padding: 12px 20px; border-bottom: 1px solid #334155; gap: 10px; }
+        #api-box input { flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; }
+        #api-box button { background: #10b981; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
+        #chat-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .message { max-width: 80%; padding: 12px 16px; border-radius: 12px; line-height: 1.5; font-size: 0.95rem; word-wrap: break-word; }
+        .user-msg { background-color: #2563eb; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .ai-msg { background-color: #1e293b; color: #e2e8f0; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #334155; }
+        .input-area { background-color: #1e293b; padding: 15px; display: flex; gap: 10px; border-top: 1px solid #334155; }
+        #user-input { flex: 1; padding: 12px 15px; border-radius: 25px; border: 1px solid #475569; background-color: #0f172a; color: white; font-size: 1rem; outline: none; }
+        #send-btn { background-color: #38bdf8; color: #0f172a; border: none; padding: 0 20px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+        #send-btn:hover { background-color: #0284c7; color: white; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>✨ het AI</h1>
+        <button class="api-btn" onclick="toggleApi()">⚙️ API Key</button>
+    </header>
+
+    <div id="api-box">
+        <input type="password" id="api-key-input" placeholder="તમારી Google Gemini API Key અહીં નાખો...">
+        <button onclick="saveApiKey()">Save</button>
+    </div>
+
+    <div id="chat-container">
+        <div class="message ai-msg">નમસ્તે! હું <b>het AI</b> છું. હું તમને કેવી રીતે મદદ કરી શકું? (જવાબ મેળવવા ઉપર ⚙️ API Key પર ક્લિક કરીને તમારી કી સેવ કરો).</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="અહીં કંઈ પણ પૂછો..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button id="send-btn" onclick="sendMessage()">મોકલો</button>
+    </div>
+
+    <script>
+        let apiKey = localStorage.getItem('het_ai_key') || '';
+        document.getElementById('api-key-input').value = apiKey;
+
+        function toggleApi() {
+            const box = document.getElementById('api-box');
+            box.style.display = box.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function saveApiKey() {
+            apiKey = document.getElementById('api-key-input').value.trim();
+            localStorage.setItem('het_ai_key', apiKey);
+            alert('API Key સેવ થઈ ગઈ છે!');
+            toggleApi();
+        }
+
+        function addMessage(text, isUser) {
+            const chat = document.getElementById('chat-container');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ' + (isUser ? 'user-msg' : 'ai-msg');
+            msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+            chat.appendChild(msgDiv);
+            chat.scrollTop = chat.scrollHeight;
+            return msgDiv;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            addMessage(text, true);
+            input.value = '';
+
+            if (!apiKey) {
+                addMessage("⚠️ કૃપા કરીને ઉપર '⚙️ API Key' બટન પર ક્લિક કરીને તમારી Google Gemini API Key નાખો. (તે Google AI Studio પરથી મફતમાં મળે છે).", false);
+                return;
+            }
+
+            const loadingMsg = addMessage("het AI વિચારી રહ્યું છે...", false);
+
+            try {
+                const response = await fetch(`https://googleapis.com{apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: text }] }]
+                    })
+                });
+                const data = await response.json();
+                if (data.candidates && data.candidates[0].content) {
+                    const reply = data.candidates[0].content.parts[0].text;
+                    loadingMsg.innerHTML = reply.replace(/\n/g, '<br>');
+                } else {
+                    loadingMsg.innerHTML = "❌ ભૂલ આવી છે. તમારી API Key સાચી છે કે નહીં તે ચકાસો.";
+                }
+            } catch (error) {
+                loadingMsg.innerHTML = "❌ ઇન્ટરનેટ અથવા API કનેક્શનમાં સમસ્યા છે.";
+            }
+        }
+    </script>
+
+</body>
+</html>
