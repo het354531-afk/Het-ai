@@ -30,7 +30,7 @@
   </header>
 
   <div id="keyBox">
-    <input type="password" id="apiKeyInput" placeholder="તમારી Gemini API Key પેસ્ટ કરો...">
+    <input type="password" id="apiKeyInput" placeholder="તમારી Gemini API Key (AQ...) પેસ્ટ કરો...">
     <button onclick="saveKey()">Save</button>
   </div>
 
@@ -55,8 +55,7 @@
     }
 
     function saveKey() {
-      const rawKey = document.getElementById('apiKeyInput').value;
-      const cleanKey = rawKey.replace(/[^a-zA-Z0-9_-]/g, '');
+      const cleanKey = document.getElementById('apiKeyInput').value.trim();
       if (!cleanKey) return alert("કૃપા કરીને સાચી API Key નાખો.");
       localStorage.setItem('HET_AI_KEY', cleanKey);
       document.getElementById('apiKeyInput').value = cleanKey;
@@ -77,8 +76,7 @@
     async function sendMessage() {
       const input = document.getElementById('promptInput');
       const text = input.value.trim();
-      const savedKey = localStorage.getItem('HET_AI_KEY') || '';
-      const cleanKey = savedKey.replace(/[^a-zA-Z0-9_-]/g, '');
+      const cleanKey = (localStorage.getItem('HET_AI_KEY') || '').trim();
 
       if (!text) return;
       if (!cleanKey) {
@@ -92,10 +90,13 @@
       const loadingMsg = addMessage("વિચારી રહ્યું છે...", 'bot');
 
       try {
-        const apiUrl = "https://googleapis.com" + cleanKey;
+        const apiUrl = "https://googleapis.com";
         const res = await fetch(apiUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "x-goog-api-key": cleanKey
+          },
           body: JSON.stringify({
             contents: [{ parts: [{ text: text }] }]
           })
