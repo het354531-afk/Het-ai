@@ -56,7 +56,7 @@
       const loadingMsg = addMessage("વિચારી રહ્યું છે...", 'bot');
 
       try {
-        const res = await fetch("https://workers.dev", {
+        const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -68,8 +68,8 @@
 
         if (data.error) {
           loadingMsg.innerText = "❌ ભૂલ: " + data.error.message;
-        } else if (data.candidates && data.candidates[0]) {
-          loadingMsg.innerText = data.candidates[0].content.parts[0].text;
+        } else if (data.candidates && data.candidates) {
+          loadingMsg.innerText = data.candidates.content.parts.text;
         } else {
           loadingMsg.innerText = "❌ કોઈ જવાબ મળ્યો નહીં.";
         }
