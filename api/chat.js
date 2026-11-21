@@ -8,7 +8,8 @@ export default async function handler(req, res) {
     try {
         const body = req.body || {};
         const history = body.history || [];
-        const userText = body.message || 'Hello';
+        const userText = body.message || 'આ ફાઇલ સમજાવો.';
+        const fileData = body.fileData || null; // { base64, mimeType }
         const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
@@ -17,12 +18,24 @@ export default async function handler(req, res) {
 
         const ai = new GoogleGenAI({ apiKey: apiKey });
         const models = ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.8-flash'];
-        
+
         const contents = history.map(item => ({
             role: item.role,
             parts: [{ text: item.text }]
         }));
-        contents.push({ role: 'user', parts: [{ text: userText }] });
+
+        const currentParts = [];
+        if (fileData && fileData.base64 && fileData.mimeType) {
+            currentParts.push({
+                inlineData: {
+                    data: fileData.base64,
+                    mimeType: fileData.mimeType
+                }
+            });
+        }
+        currentParts.push({ text: userText });
+
+        contents.push({ role: 'user', parts: currentParts });
 
         let lastError = null;
 
@@ -32,7 +45,7 @@ export default async function handler(req, res) {
                     model: modelName,
                     contents: contents,
                     config: {
-                        systemInstruction: "તારું નામ het AI છે. તને હેત પટેલ (Het Patel) એ બનાવ્યો છે. કોઈ પણ પૂછે કે તને કોણે બનાવ્યો કે તું કોણ છે, તો ગર્વથી કહેવું કે 'હું het AI છું અને મને હેત પટેલે બનાવ્યો છે.' હંમેશા મદદરૂપ, સરળ અને સ્પષ્ટ ગુજરાતી અથવા જે ભાષામાં સવાલ પૂછાય તે ભાષામાં જવાબ આપવો."
+                        systemInstruction: "તારું નામ het AI છે. તને હેત પટેલ (Het Patel) એ બનાવ્યો છે. કોઈ પણ પૂછે કે તને કોણે બનાવ્યો કે તું કોણ છે, તો ગર્વથી કહેવું કે 'હું het AI છું અને મને હેત પટેલે બનાવ્યો છે.' યુઝર જો કોઈ ફોટો કે ડોક્યુમેન્ટ મોકલે તો તેને ધ્યાનથી વાંચીને સરળ ગુજરાતી અથવા પૂછાયેલી ભાષામાં સ્પષ્ટ જવાબ આપવો."
                     }
                 });
                 const replyText = response.text || 'નમસ્તે! હું het AI છું.';
@@ -46,4 +59,4 @@ export default async function handler(req, res) {
     } catch (error) {
         return res.status(500).json({ error: { message: error.message } });
     }
-}
+                                              }
