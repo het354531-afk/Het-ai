@@ -1,12 +1,8 @@
 {
   "name": "het-ai",
   "version": "1.0.0",
-  "description": "het AI Smart Assistant",
   "type": "module",
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "scripts": {
-    "start": "node api/chat.js"
+  "dependencies": {
+    "@google/genai": "^1.0.0"
   }
 }
