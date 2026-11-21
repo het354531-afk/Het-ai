@@ -1,3 +1,5 @@
+import { GoogleGenAI } from '@google/genai';
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: { message: 'Only POST allowed' } });
@@ -9,29 +11,17 @@ export default async function handler(req, res) {
         const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
-            return res.status(500).json({ error: { message: 'API Key missing' } });
+            return res.status(500).json({ error: { message: 'Vercel માં GEMINI_API_KEY સેવ નથી.' } });
         }
 
-        const response = await fetch('https://googleapis.com' + apiKey, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: userText }] }]
-            })
+        const ai = new GoogleGenAI({ apiKey: apiKey });
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: userText,
         });
 
-        const data = await response.json();
-        
-        if (!response.ok) {
-            const errMsg = (data.error && data.error.message) ? data.error.message : 'Google API Error';
-            return res.status(response.status).json({ error: { message: errMsg } });
-        }
-
-        const firstCandidate = data.candidates.at(0);
-        const firstPart = firstCandidate.content.parts.at(0);
-        const reply = firstPart.text;
-
-        return res.status(200).json({ reply: reply, candidates: data.candidates });
+        const reply = response.text;
+        return res.status(200).json({ reply: reply });
     } catch (error) {
         return res.status(500).json({ error: { message: error.message } });
     }
