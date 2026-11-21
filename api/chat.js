@@ -7,9 +7,13 @@ export default async function handler(req, res) {
 
     try {
         const body = req.body || {};
-        const userText = body.message || body.prompt || body.text || 'Hello';
-        const apiKey = process.env.GEMINI_API_KEY;
+        let userText = body.message || body.prompt || body.text;
+        if (!userText && body.contents && body.contents.at(0) && body.contents.at(0).parts) {
+            userText = body.contents.at(0).parts.at(0).text;
+        }
+        userText = userText || 'Hello';
 
+        const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             return res.status(500).json({ error: { message: 'Vercel માં GEMINI_API_KEY સેવ નથી.' } });
         }
@@ -24,7 +28,12 @@ export default async function handler(req, res) {
                     model: modelName,
                     contents: userText,
                 });
-                return res.status(200).json({ reply: response.text });
+                const replyText = response.text || 'નમસ્તે! હું het AI છું.';
+                return res.status(200).json({
+                    reply: replyText,
+                    text: replyText,
+                    candidates: [{ content: { parts: [{ text: replyText }] } }]
+                });
             } catch (err) {
                 lastError = err;
             }
