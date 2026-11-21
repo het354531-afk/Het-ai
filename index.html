@@ -9,10 +9,7 @@
     body { background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; height: 100vh; }
     header { background-color: #1e293b; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
     .logo { font-size: 20px; font-weight: bold; color: #38bdf8; }
-    .key-btn { background-color: #334155; color: #e2e8f0; border: 1px solid #475569; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; }
-    #keyBox { display: none; background-color: #1e293b; padding: 12px 18px; border-bottom: 1px solid #334155; gap: 8px; }
-    #keyBox input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white; }
-    #keyBox button { background-color: #16a34a; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .badge { background-color: #065f46; color: #6ee7b7; padding: 4px 10px; border-radius: 12px; font-size: 12px; }
     #chatArea { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .msg { max-width: 82%; padding: 12px 16px; border-radius: 14px; line-height: 1.5; font-size: 15px; white-space: pre-wrap; word-wrap: break-word; }
     .bot { background-color: #1e293b; color: #f1f5f9; align-self: flex-start; border: 1px solid #334155; }
@@ -26,16 +23,11 @@
 
   <header>
     <div class="logo">✨ het AI</div>
-    <button class="key-btn" onclick="toggleKeyBox()">⚙️ API Key</button>
+    <div class="badge">● Online</div>
   </header>
 
-  <div id="keyBox">
-    <input type="password" id="apiKeyInput" placeholder="તમારી Gemini API Key (AQ...) પેસ્ટ કરો...">
-    <button onclick="saveKey()">Save</button>
-  </div>
-
   <div id="chatArea">
-    <div class="msg bot">નમસ્તે! હું het AI છું. હું તમને કેવી રીતે મદદ કરી શકું? (જવાબ મેળવવા ઉપર ⚙️ API Key પર ક્લિક કરીને તમારી કી સેવ કરો).</div>
+    <div class="msg bot">નમસ્તે! હું het AI છું. હું તમને કેવી રીતે મદદ કરી શકું?</div>
   </div>
 
   <footer>
@@ -44,25 +36,6 @@
   </footer>
 
   <script>
-    window.onload = () => {
-      const saved = localStorage.getItem('HET_AI_KEY');
-      if (saved) document.getElementById('apiKeyInput').value = saved;
-    };
-
-    function toggleKeyBox() {
-      const box = document.getElementById('keyBox');
-      box.style.display = box.style.display === 'flex' ? 'none' : 'flex';
-    }
-
-    function saveKey() {
-      const cleanKey = document.getElementById('apiKeyInput').value.trim();
-      if (!cleanKey) return alert("કૃપા કરીને સાચી API Key નાખો.");
-      localStorage.setItem('HET_AI_KEY', cleanKey);
-      document.getElementById('apiKeyInput').value = cleanKey;
-      alert("API Key સેવ થઈ ગઈ છે!");
-      document.getElementById('keyBox').style.display = 'none';
-    }
-
     function addMessage(text, sender) {
       const chatArea = document.getElementById('chatArea');
       const div = document.createElement('div');
@@ -76,27 +49,16 @@
     async function sendMessage() {
       const input = document.getElementById('promptInput');
       const text = input.value.trim();
-      const cleanKey = (localStorage.getItem('HET_AI_KEY') || '').trim();
-
       if (!text) return;
-      if (!cleanKey) {
-        alert("પહેલા ઉપર ⚙️ API Key પર ક્લિક કરીને તમારી કી સેવ કરો.");
-        toggleKeyBox();
-        return;
-      }
 
       addMessage(text, 'user');
       input.value = '';
       const loadingMsg = addMessage("વિચારી રહ્યું છે...", 'bot');
 
       try {
-        const apiUrl = "https://googleapis.com";
-        const res = await fetch(apiUrl, {
+        const res = await fetch("https://workers.dev", {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "x-goog-api-key": cleanKey
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: text }] }]
           })
@@ -105,9 +67,9 @@
         const data = await res.json();
 
         if (data.error) {
-          loadingMsg.innerText = "❌ Google API ભૂલ: " + data.error.message;
-        } else if (data.candidates && data.candidates) {
-          loadingMsg.innerText = data.candidates.content.parts.text;
+          loadingMsg.innerText = "❌ ભૂલ: " + data.error.message;
+        } else if (data.candidates && data.candidates[0]) {
+          loadingMsg.innerText = data.candidates[0].content.parts[0].text;
         } else {
           loadingMsg.innerText = "❌ કોઈ જવાબ મળ્યો નહીં.";
         }
